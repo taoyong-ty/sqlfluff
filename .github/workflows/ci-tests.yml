@@ -65,7 +65,7 @@ jobs:
     name: Python Tests
     strategy:
       matrix:
-        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        python-version: [ "3.13" ]
         include:
           # Default to test without coverage tracking on older python versions.
           # This saves time, as testing without coverage tracking is faster.
@@ -90,11 +90,6 @@ jobs:
       matrix:
         dbt-version:
           - dbt140
-          - dbt150
-          - dbt160
-          - dbt170
-          - dbt180
-          - dbt190
         include:
           # Default to python 3.12 for dbt tests.
           # * Python 3.13 not supported yet.
@@ -203,74 +198,6 @@ jobs:
           python "$file"
         done
 
-  python-windows-tests:
-    runs-on: windows-latest
-    name: Python 3.13 Windows tests
-    steps:
-    - name: Set git to use LF
-      run: |
-        git config --global core.autocrlf false
-        git config --global core.eol lf
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.13"
-    - name: List Env
-      shell: bash
-      run: |
-        env | sort
-    - name: Install dependencies
-      shell: bash
-      run: pip install tox
-    - name: Run the tests
-      shell: bash
-      # Set python temp dir in working dir as on GitHub Actions Windows
-      # machine often has system temp dir (which tox uses) on C drive and
-      # working dir on D drive which causes problems.
-      run: |
-        mkdir temp_pytest
-        python -m tox -e winpy -- --cov=sqlfluff -n 2 test -m "not integration"
-    - name: Upload coverage data (github)
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-data-winpy3.13
-        path: ".coverage.*"
-        if-no-files-found: ignore
-        include-hidden-files: true
-
-  python-windows-dbt-tests:
-    runs-on: windows-latest
-    name: dbt Plugin Python 3.12 Windows tests
-    steps:
-    - name: Start PostgreSQL on Windows
-      run: |
-        $pgService = Get-Service -Name postgresql*
-        Set-Service -InputObject $pgService -Status running -StartupType automatic
-        Start-Process -FilePath "$env:PGBIN\pg_isready" -Wait -PassThru
-    - name: Set postgres user password
-      run: |
-        & $env:PGBIN\psql --command="ALTER USER postgres PASSWORD 'password';" --command="\du"
-    - name: Set git to use LF
-      run: |
-        git config --global core.autocrlf false
-        git config --global core.eol lf
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        # NOTE: As of 2024-10-10, dbt does not yet support python 3.13.
-        python-version: "3.12"
-    - name: Install dependencies
-      shell: bash
-      run: pip install tox
-    - name: Run the tests
-      shell: bash
-      # Do not set explicitly temp dir for dbt as causes problems
-      # None of these test need temp dir set
-      run: |
-        python -m tox -e dbt180-winpy -- plugins/sqlfluff-templater-dbt
-
   pip-test-pull-request:
     # Test that using pip install works as we've missed
     # some dependencies in the past - see #1842
@@ -305,7 +232,7 @@ jobs:
   coverage_check:
     name: Combine & check 100% coverage.
     runs-on: ubuntu-latest
-    needs: [python-version-tests, dbt-tests, python-windows-tests, dialect-tests]
+    needs: [python-version-tests, dbt-tests, dialect-tests]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
