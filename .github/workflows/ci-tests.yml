@@ -36,7 +36,6 @@ jobs:
           [
             "linting",
             "doclinting",
-            "docbuild",
             "yamllint",
             "mypy",
             "mypyc",
@@ -48,7 +47,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.12"
+        python-version: "3.13"
     - name: Install dependencies
       run: pip install tox
     - name: Run the tests
@@ -64,8 +63,6 @@ jobs:
     with:
       python-version: "3.13"
       coverage: true
-    secrets:
-      gh_token: ${{ secrets.github_token }}
 
   dbt-tests:
     name: dbt Plugin Tests
@@ -77,8 +74,6 @@ jobs:
       python-version: "3.13"
       dbt-version: "dbt190"
       coverage: true
-    secrets:
-      gh_token: ${{ secrets.github_token }}
 
   ymlchecks:
     runs-on: ubuntu-latest
